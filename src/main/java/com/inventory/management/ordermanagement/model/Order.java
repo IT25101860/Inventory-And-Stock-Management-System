@@ -3,12 +3,7 @@ package com.inventory.management.ordermanagement.model;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 
-/**
- * Base class for all order types.
- * Demonstrates: Encapsulation (private fields + getters/setters)
- *               Inheritance (PurchaseOrder & ReturnOrder extend this)
- *               Polymorphism (calculateTotal() overridden in subclasses)
- */
+
 
 @Entity
 @Table(name = "orders")
@@ -29,7 +24,6 @@ public abstract class Order {
     @Column(nullable = false)
     private String status; // pending, received, cancelled
 
-    // ── Constructor ────────────────────────────────────────────────────────────
 
     protected Order() {}
 
@@ -39,16 +33,10 @@ public abstract class Order {
         this.totalAmount = 0.0;
     }
 
-    // ── Abstract method (polymorphism) ─────────────────────────────────────────
 
-    /**
-     * Each subclass calculates its total differently.
-     * PurchaseOrder: sum of item costs.
-     * ReturnOrder:   negated refund amount.
-     */
+
     public abstract double calculateTotal();
 
-    // ── Concrete shared methods ─────────────────────────────────────────────────
 
     public void placeOrder() {
         this.status      = "pending";
