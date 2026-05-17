@@ -1,51 +1,78 @@
 package com.inventory.management.productmanagement.model;
 
+import com.inventory.management.common.model.BaseEntity;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
+import lombok.*;
+import java.math.BigDecimal;
 
 @Entity
 @Table(name = "products")
-@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
-@DiscriminatorColumn(name = "product_type", discriminatorType = DiscriminatorType.STRING)
-public abstract class Product {
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@ToString
+public class Product extends BaseEntity {
 
-    // Encapsulation: all fields are private
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
+    @NotBlank(message = "Product name is required")
+    @Size(min = 2, max = 100, message = "Name must be 2-100 characters")
+    @Column(nullable = false)
     private String name;
-    private double price;
-    private int quantity;
+
+    @Size(max = 500, message = "Description too long")
+    @Column(length = 500)
     private String description;
 
-    // No-arg constructor (required by JPA)
-    public Product() {}
+    @NotBlank(message = "SKU is required")
+    @Column(unique = true, nullable = false, length = 50)
+    private String sku;
 
-    // Parameterized constructor
-    public Product(String name, double price, int quantity, String description) {
-        this.name = name;
-        this.price = price;
-        this.quantity = quantity;
-        this.description = description;
+    @NotNull(message = "Price is required")
+    @DecimalMin(value = "0.0", inclusive = false, message = "Price must be greater than 0")
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal price;
+
+    @NotNull(message = "Category is required")
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Category category;
+
+    @Min(value = 0, message = "Stock cannot be negative")
+    @Column(nullable = false)
+    private Integer stockQuantity = 0;
+
+    @Min(value = 0, message = "Reorder level cannot be negative")
+    @Column(nullable = false)
+    private Integer reorderLevel = 10;
+
+    @Column(nullable = false)
+    private Boolean active = true;
+
+    @Column
+    private String imagePath;
+
+    public enum Category {
+        ELECTRONICS,
+        CLOTHING,
+        FOOD_BEVERAGE,
+        FURNITURE,
+        STATIONERY,
+        TOOLS,
+        OTHER
     }
 
-    // Getters and Setters (Encapsulation)
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public boolean isLowStock() {
+        return this.stockQuantity <= this.reorderLevel;
+    }
 
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
+    public boolean isOutOfStock() {
+        return this.stockQuantity == 0;
+    }
 
-    public double getPrice() { return price; }
-    public void setPrice(double price) { this.price = price; }
-
-    public int getQuantity() { return quantity; }
-    public void setQuantity(int quantity) { this.quantity = quantity; }
-
-    public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
-
-    // Abstract methods — forces subclasses to override (Polymorphism)
-    public abstract String getProductType();
-    public abstract String getDetails();
+    public String getStockStatus() {
+        if (isOutOfStock()) return "OUT_OF_STOCK";
+        if (isLowStock())   return "LOW";
+        return "OK";
+    }
 }
