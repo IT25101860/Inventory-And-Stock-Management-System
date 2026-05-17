@@ -3,11 +3,6 @@ package com.inventory.management.stock.model;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
-/**
- * OOP CONCEPT: INHERITANCE
- * Abstract base class for all stock transactions.
- * StockIn and StockOut both extend this class.
- */
 @MappedSuperclass  // JPA: fields are mapped to child tables
 public abstract class StockTransaction {
 
@@ -26,16 +21,8 @@ public abstract class StockTransaction {
 
     private String notes;
 
-    // -------------------------------------------------------
-    // OOP CONCEPT: POLYMORPHISM
-    // Each subclass MUST implement these methods differently.
-    // -------------------------------------------------------
     public abstract String getTransactionType();
 
-    /**
-     * Polymorphic method — StockIn adds qty, StockOut subtracts qty.
-     * The caller doesn't need to know which subclass it has.
-     */
     public abstract void updateStock(StockEntry stockEntry);
 
     // Constructor
@@ -43,7 +30,6 @@ public abstract class StockTransaction {
         this.transactionDate = LocalDateTime.now();
     }
 
-    // --- Getters & Setters (Encapsulation) ---
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -52,7 +38,8 @@ public abstract class StockTransaction {
 
     public int getQuantity() { return quantity; }
     public void setQuantity(int quantity) {
-        if (quantity <= 0) throw new IllegalArgumentException("Quantity must be positive");
+        if (quantity <= 0)
+            throw new IllegalArgumentException("Quantity must be positive");
         this.quantity = quantity;
     }
 

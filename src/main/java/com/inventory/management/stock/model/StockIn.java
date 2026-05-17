@@ -3,13 +3,6 @@ package com.inventory.management.stock.model;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
-/**
- * OOP CONCEPT: INHERITANCE
- * StockIn extends StockTransaction — represents goods coming IN to stock.
- *
- * OOP CONCEPT: POLYMORPHISM
- * Overrides updateStock() to ADD quantity.
- */
 @Entity
 @Table(name = "stock_in")
 public class StockIn extends StockTransaction {
@@ -20,16 +13,12 @@ public class StockIn extends StockTransaction {
     @Column(name = "unit_cost")
     private double unitCost;
 
-    // --- Polymorphism: returns type label ---
+    // Polymorphism: returns type label
     @Override
     public String getTransactionType() {
         return "STOCK_IN";
     }
 
-    /**
-     * OOP CONCEPT: POLYMORPHISM — OVERRIDING
-     * Stock IN means we ADD the quantity to current stock.
-     */
     @Override
     public void updateStock(StockEntry stockEntry) {
         stockEntry.setQuantityOnHand(
@@ -38,7 +27,6 @@ public class StockIn extends StockTransaction {
         stockEntry.setLastUpdated(LocalDateTime.now());
     }
 
-    // --- Getters & Setters ---
     public String getSupplierName() { return supplierName; }
     public void setSupplierName(String supplierName) { this.supplierName = supplierName; }
 

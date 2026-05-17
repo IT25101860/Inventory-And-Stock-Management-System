@@ -3,17 +3,10 @@ package com.inventory.management.stock.model;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
-/**
- * OOP CONCEPT: ENCAPSULATION
- * All fields are PRIVATE. Access is controlled through
- * public getters/setters. Business logic (isLowStock)
- * is hidden inside the class.
- */
 @Entity
 @Table(name = "stock_entries")
 public class StockEntry {
 
-    // Private fields — encapsulation
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -33,21 +26,20 @@ public class StockEntry {
     @Column(name = "last_updated")
     private LocalDateTime lastUpdated;
 
-    // ---------------------------------------------------
-    // Encapsulated Business Logic — callers just ask
-    // "is this low stock?" without knowing the formula.
-    // ---------------------------------------------------
     public boolean isLowStock() {
         return quantityOnHand <= minimumStockLevel;
     }
 
     public String getStockStatus() {
-        if (quantityOnHand == 0)       return "OUT_OF_STOCK";
-        else if (isLowStock())         return "LOW_STOCK";
-        else                           return "IN_STOCK";
+        if (quantityOnHand == 0)
+            return "OUT_OF_STOCK";
+        else if (isLowStock())
+            return "LOW_STOCK";
+        else
+            return "IN_STOCK";
     }
 
-    // --- Getters & Setters ---
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -59,7 +51,8 @@ public class StockEntry {
 
     public int getQuantityOnHand() { return quantityOnHand; }
     public void setQuantityOnHand(int quantityOnHand) {
-        if (quantityOnHand < 0) throw new IllegalArgumentException("Stock cannot be negative");
+        if (quantityOnHand < 0)
+            throw new IllegalArgumentException("Stock cannot be negative");
         this.quantityOnHand = quantityOnHand;
     }
 
