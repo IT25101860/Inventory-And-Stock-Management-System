@@ -1,88 +1,48 @@
 package com.inventory.management.ordermanagement.model;
 
+import com.inventory.management.common.model.BaseEntity;
+import com.inventory.management.productmanagement.model.Product;
+import com.inventory.management.supplier_management.model.Supplier;
 import jakarta.persistence.*;
-import java.time.LocalDate;
-
-
+import jakarta.validation.constraints.*;
+import lombok.*;
+import java.math.BigDecimal;
 
 @Entity
 @Table(name = "orders")
-@Inheritance(strategy = InheritanceType.JOINED)
-@DiscriminatorColumn(name = "order_type")
-public abstract class Order {
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor @ToString
+public class Order extends BaseEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long orderId;
+    @NotBlank(message = "Order number is required")
+    @Column(unique = true, nullable = false)
+    private String orderNumber;
 
+    @NotNull
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_id", nullable = false)
+    private Product product;
+
+    @NotNull
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "supplier_id", nullable = false)
+    private Supplier supplier;
+
+    @NotNull
+    @Min(1)
     @Column(nullable = false)
-    private LocalDate orderDate;
+    private Integer quantity;
 
+    @NotNull
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal totalAmount;
+
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private double totalAmount;
+    private OrderStatus status = OrderStatus.PENDING;
 
-    @Column(nullable = false)
-    private String status; // pending, received, cancelled
+    @Size(max = 300)
+    @Column(length = 300)
+    private String notes;
 
-
-    protected Order() {}
-
-    protected Order(LocalDate orderDate, String status) {
-        this.orderDate   = orderDate;
-        this.status      = status;
-        this.totalAmount = 0.0;
-    }
-
-
-
-    public abstract double calculateTotal();
-
-
-    public void placeOrder() {
-        this.status      = "pending";
-        this.orderDate   = LocalDate.now();
-        this.totalAmount = calculateTotal();
-    }
-
-    public void cancelOrder() {
-        this.status = "cancelled";
-    }
-
-    public void updateStatus(String newStatus) {
-        this.status = newStatus;
-    }
-
-    // Getters & Setters (Encapsulation)
-
-    public Long getOrderId(){
-        return orderId;
-    }
-
-    public void setOrderId(Long orderId){
-        this.orderId = orderId;
-    }
-
-    public LocalDate getOrderDate(){
-        return orderDate;
-    }
-
-    public void setOrderDate(LocalDate orderDate){
-        this.orderDate = orderDate;
-    }
-
-    public double getTotalAmount(){
-        return totalAmount;
-    }
-
-    public void setTotalAmount(double totalAmount){
-        this.totalAmount = totalAmount;
-    }
-
-    public String getStatus(){
-        return status;
-    }
-
-    public void setStatus(String status){
-        this.status = status;
-    }
+    public enum OrderStatus { PENDING, CONFIRMED, SHIPPED, DELIVERED, CANCELLED }
 }
