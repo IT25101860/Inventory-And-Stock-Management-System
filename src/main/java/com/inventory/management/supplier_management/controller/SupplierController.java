@@ -2,113 +2,77 @@ package com.inventory.management.supplier_management.controller;
 
 import com.inventory.management.supplier_management.model.Supplier;
 import com.inventory.management.supplier_management.service.SupplierService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-
-@RestController
-@RequestMapping("/api/suppliers")
-@CrossOrigin(origins = "*") // allows frontend (HTML/JS) to call this API
+@Controller
+@RequestMapping("/suppliers")
 public class SupplierController {
 
-    @Autowired
-    private SupplierService supplierService;
-
-
-    @PostMapping
-    public ResponseEntity<?> addSupplier(@RequestBody Map<String, String> body) {
-        try {
-            Supplier supplier = supplierService.addSupplier(
-                    body.get("type"),
-                    body.get("name"),
-                    body.get("email"),
-                    body.get("phone"),
-                    body.get("address"),
-                    body.get("extraField1"),
-                    body.get("extraField2")
-            );
-            return ResponseEntity.status(HttpStatus.CREATED).body(supplier);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
-    }
-
-    // ===================== READ =====================
-
+    @Autowired private SupplierService supplierService;
 
     @GetMapping
-    public ResponseEntity<List<Supplier>> getAllSuppliers() {
-        return ResponseEntity.ok(supplierService.getAllSuppliers());
+    public String list(@RequestParam(required = false) String search, Model model) {
+        model.addAttribute("suppliers", search != null && !search.isBlank()
+                ? supplierService.searchSuppliers(search) : supplierService.getAllSuppliers());
+        model.addAttribute("search", search);
+        model.addAttribute("activePage", "suppliers");
+        return "suppliers/list";
     }
 
+    @GetMapping("/new")
+    public String createForm(Model model) {
+        model.addAttribute("supplier", new Supplier());
+        model.addAttribute("isEdit", false);
+        model.addAttribute("activePage", "suppliers");
+        return "suppliers/form";
+    }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<?> getSupplierById(@PathVariable String id) {
-        try {
-            Supplier supplier = supplierService.getSupplierById(id);
-            return ResponseEntity.ok(supplier);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
+    @PostMapping("/new")
+    public String create(@Valid @ModelAttribute Supplier supplier, BindingResult result,
+                         Model model, RedirectAttributes ra) {
+        if (result.hasErrors()) {
+            model.addAttribute("isEdit", false);
+            model.addAttribute("activePage", "suppliers");
+            return "suppliers/form";
         }
+        try { supplierService.saveSupplier(supplier); ra.addFlashAttribute("success", "Supplier added!"); }
+        catch (Exception e) { ra.addFlashAttribute("error", e.getMessage()); }
+        return "redirect:/suppliers";
     }
 
-    @GetMapping("/search")
-    public ResponseEntity<List<Supplier>> searchSuppliers(@RequestParam String name) {
-        return ResponseEntity.ok(supplierService.searchSuppliersByName(name));
+    @GetMapping("/{id}/edit")
+    public String editForm(@PathVariable Long id, Model model, RedirectAttributes ra) {
+        return supplierService.getSupplierById(id).map(s -> {
+            model.addAttribute("supplier", s);
+            model.addAttribute("isEdit", true);
+            model.addAttribute("activePage", "suppliers");
+            return "suppliers/form";
+        }).orElseGet(() -> { ra.addFlashAttribute("error", "Supplier not found."); return "redirect:/suppliers"; });
     }
 
-    @GetMapping("/type")
-    public ResponseEntity<List<Supplier>> getByType(@RequestParam String type) {
-        return ResponseEntity.ok(supplierService.getSuppliersByType(type));
-    }
-
-    @GetMapping("/{id}/delivery-time")
-    public ResponseEntity<?> getDeliveryTime(@PathVariable String id) {
-        try {
-            int days = supplierService.getDeliveryTime(id);
-            Map<String, Object> response = new HashMap<>();
-            response.put("supplierId", id);
-            response.put("estimatedDeliveryDays", days);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
+    @PostMapping("/{id}/edit")
+    public String update(@PathVariable Long id, @Valid @ModelAttribute Supplier supplier,
+                         BindingResult result, Model model, RedirectAttributes ra) {
+        if (result.hasErrors()) {
+            model.addAttribute("isEdit", true);
+            model.addAttribute("activePage", "suppliers");
+            return "suppliers/form";
         }
+        try { supplierService.updateSupplier(id, supplier); ra.addFlashAttribute("success", "Supplier updated!"); }
+        catch (Exception e) { ra.addFlashAttribute("error", e.getMessage()); }
+        return "redirect:/suppliers";
     }
 
-    // ===================== UPDATE =====================
-
-    @PutMapping("/{id}")
-    public ResponseEntity<?> updateSupplier(@PathVariable String id,
-                                            @RequestBody Map<String, String> body) {
-        try {
-            Supplier updated = supplierService.updateSupplier(
-                    id,
-                    body.get("name"),
-                    body.get("email"),
-                    body.get("phone"),
-                    body.get("address")
-            );
-            return ResponseEntity.ok(updated);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
-        }
-    }
-
-    // ===================== DELETE =====================
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteSupplier(@PathVariable String id) {
-        try {
-            supplierService.deleteSupplier(id);
-            return ResponseEntity.ok(Map.of("message", "Supplier deleted successfully"));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
-        }
+    @PostMapping("/{id}/delete")
+    public String delete(@PathVariable Long id, RedirectAttributes ra) {
+        try { supplierService.deleteSupplier(id); ra.addFlashAttribute("success", "Supplier removed."); }
+        catch (Exception e) { ra.addFlashAttribute("error", e.getMessage()); }
+        return "redirect:/suppliers";
     }
 }
