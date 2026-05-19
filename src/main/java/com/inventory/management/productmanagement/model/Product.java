@@ -73,6 +73,6 @@ public class Product extends BaseEntity {
     public String getStockStatus() {
         if (isOutOfStock()) return "OUT_OF_STOCK";
         if (isLowStock())   return "LOW";
-        return "OK";
+        return "OK"; //
     }
 }
